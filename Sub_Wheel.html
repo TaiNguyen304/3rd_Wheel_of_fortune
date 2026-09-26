@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sub Wheel</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: sans-serif;
+            font-weight: bold !important;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: purple;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .wheel-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 600px;
+            height: 600px;
+            transform-origin: center center !important;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), margin-top 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            transform: scale(1) rotate(0deg);
+            margin-top: 0px;
+        }
+
+        .wheel-area.zoomed {
+            transform: scale(2) rotate(0deg) !important;
+            margin-top: 750px;
+        }
+
+        .wheel-area.zoomed.tilt-red {
+            transform: scale(2) rotate(30deg) !important;
+            margin-top: 750px;
+        }
+
+        .wheel-area.zoomed.tilt-blue {
+            transform: scale(2) rotate(-30deg) !important;
+            margin-top: 750px;
+        }
+
+        .wheel-container {
+            width: 470px;
+            height: 470px;
+            position: relative;
+        }
+
+        #wheelGraphic {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-sizing: border-box;
+            border: 18px solid #000000;
+            background-clip: padding-box;
+            background-origin: padding-box;
+            background-size: 100% 100%;
+            background-position: center center;
+            background-repeat: no-repeat;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            display: block;
+            background-image: url('./Nón.png');
+            position: relative;
+            will-change: transform;
+            transform: translateZ(0);
+            transform-origin: center center !important;
+            backface-visibility: hidden;
+            overflow: visible;
+        }
+
+        #specialValuePopup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: purple;
+            color: white;
+            padding: 14px 28px;
+            font-size: 28px;
+            font-weight: 900;
+            border-radius: 10px;
+            border: 3px solid white;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8);
+            z-index: 999;
+            display: none;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .wheel-center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 176px;
+            height: 176px;
+            border-radius: 50%;
+            background-color: #008000;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .wheel-type-normal {
+            background-size: calc(100% + 7px) calc(100% + 7px) !important;
+        }
+
+        .wheel-type-special {
+            background-size: calc(100% + 12px) calc(100% + 12px) !important;
+        }
+
+        .wheel-type-special .wheel-center-circle,
+        .wheel-type-special .items-ring {
+            display: none !important;
+        }
+
+        .items-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            transform-origin: center center !important;
+        }
+
+        .placed-item {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: center center !important;
+            display: none;
+        }
+
+        .placed-item img {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            object-fit: fill;
+            filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        .placed-item.is-card img {
+            top: 10px;
+            width: 8.5%;
+            max-height: 40px;
+            object-fit: contain;
+            clip-path: none;
+        }
+
+        .placed-item.is-wedge img {
+            top: 3px;
+            width: 12.8%;
+            height: 29.3%;
+            object-fit: contain;
+            clip-path: none;
+        }
+
+        .dots-ring {
+            position: absolute;
+            top: -18px;
+            left: -18px;
+            width: calc(100% + 36px);
+            height: calc(100% + 36px);
+            pointer-events: none;
+            z-index: 5;
+            transform-origin: center center !important;
+        }
+
+        .dot-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: center center !important;
+        }
+
+        .dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        .pointer-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: center center;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .wrapper-red {
+            transform: rotate(-30deg);
+        }
+
+        .wrapper-yellow {
+            transform: rotate(0deg);
+        }
+
+        .wrapper-blue {
+            transform: rotate(30deg);
+        }
+
+        .pointer-body {
+            position: absolute;
+            top: -26px;
+            left: 50%;
+            transform: translateX(-50%);
+            filter: drop-shadow(0px 3px 5px rgba(0, 0, 0, 0.4));
+        }
+
+        .pointer-body svg path {
+            transition: fill 0.2s;
+        }
+
+        #pointer-red {
+            --p-color: #FFFFFF;
+        }
+
+        #pointer-yellow {
+            --p-color: #FFFFFF;
+        }
+
+        #pointer-blue {
+            --p-color: #FFFFFF;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="wheel-area" id="wheelArea">
+        <div class="wheel-container" id="wheelContainer">
+
+            <div id="wheelGraphic">
+                <div class="wheel-center-circle"></div>
+                <div class="items-ring" id="itemsRing"></div>
+                <div class="dots-ring" id="dotsRing"></div>
+            </div>
+
+            <div id="specialValuePopup">0 điểm</div>
+
+            <div class="pointer-wrapper wrapper-red">
+                <div class="pointer-body" id="pointer-red">
+                    <svg width="22" height="44" viewBox="0 0 22 44" style="display: block;">
+                        <path d="M 11,43 L 1.5,13 A 9.5,9.5 0 1,1 20.5,13 Z" fill="var(--p-color)"
+                            stroke="white" stroke-width="1.8" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="pointer-wrapper wrapper-yellow">
+                <div class="pointer-body" id="pointer-yellow">
+                    <svg width="22" height="44" viewBox="0 0 22 44" style="display: block;">
+                        <path d="M 11,43 L 1.5,13 A 9.5,9.5 0 1,1 20.5,13 Z" fill="var(--p-color)"
+                            stroke="white" stroke-width="1.8" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="pointer-wrapper wrapper-blue">
+                <div class="pointer-body" id="pointer-blue">
+                    <svg width="22" height="44" viewBox="0 0 22 44" style="display: block;">
+                        <path d="M 11,43 L 1.5,13 A 9.5,9.5 0 1,1 20.5,13 Z" fill="var(--p-color)"
+                            stroke="white" stroke-width="1.8" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var supabaseUrl = 'https://vjwwbzjzcbtkksehwfll.supabase.co';
+        var supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqd3diemp6Y2J0a2tzZWh3ZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NDIyOTYsImV4cCI6MjA5NTUxODI5Nn0.Zcn4hvlLtRirM-SPGrFvu3ivu8RYF9WngvbxCMCGfh4';
+        var supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('roomid');
+
+        if (!roomId) {
+            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-size:24px;color:white;text-align:center;padding:20px;">Vui lòng truy cập với tham số ?roomid=MÃ_PHÒNG<br><br><a href="index.html" style="color:yellow;">Quay về đăng nhập</a></div>';
+            throw new Error('Missing roomid');
+        }
+
+        let currentGlobalAudio = null;
+
+        function playSoundEffect(soundFile) {
+            if (soundFile === 'STOP') {
+                if (currentGlobalAudio) {
+                    currentGlobalAudio.pause();
+                    currentGlobalAudio.currentTime = 0;
+                }
+                return;
+            }
+
+            if (currentGlobalAudio) {
+                currentGlobalAudio.pause();
+                currentGlobalAudio.currentTime = 0;
+            }
+
+            currentGlobalAudio = new Audio('./' + soundFile);
+            currentGlobalAudio.play().catch(function (error) {
+                console.warn("Autoplay audio error:", error);
+            });
+        }
+
+        let currentRotation = 270;
+        let isSpecialMode = false;
+        let specialWedges = [];
+        let isSpinningNow = false;
+        let activeWheelType = 'normal';
+        let pointerLightsState = { red: 'off', yellow: 'off', blue: 'off' };
+
+        function normalizeAngle(deg) {
+            return ((deg % 360) + 360) % 360;
+        }
+
+        function getVisualRotation() {
+            const style = wheelGraphic.style.transform || '';
+            const match = style.match(/rotate\(\s*([-\d.]+)deg\s*\)/);
+            if (match) return parseFloat(match[1]);
+            return currentRotation;
+        }
+
+        function inferWheelTypeFromBg(bg) {
+            if (!bg) return 'normal';
+            if (bg.includes('Đặc Biệt')) return 'special';
+            return 'normal';
+        }
+
+        const wheelGraphic = document.getElementById('wheelGraphic');
+        const wheelArea = document.getElementById('wheelArea');
+        const itemsRing = document.getElementById('itemsRing');
+        const specialValuePopup = document.getElementById('specialValuePopup');
+
+        const itemsPlacementConfig = {
+            "Thẻ Cơ hội (15°)": { angle: 15, img: "Thẻ Cơ Hội.png", isCard: true },
+            "Thẻ Cơ hội (105°)": { angle: 105, img: "Thẻ Cơ Hội.png", isCard: true },
+            "Thẻ Cơ hội (210°)": { angle: 210, img: "Thẻ Cơ Hội.png", isCard: true },
+            "Ô 1 Triệu (45°)": { angle: 45, img: "Ô 1 Triệu.png", isCard: false },
+            "Ô 1 Triệu (165°)": { angle: 165, img: "Ô 1 Triệu.png", isCard: false },
+            "Ô 1 Triệu (255°)": { angle: 255, img: "Ô 1 Triệu.png", isCard: false },
+            "Ô 2.500 (90°)": { angle: 90, img: "Ô 2500.png", isCard: false },
+            "Ô 3.500 (90°)": { angle: 90, img: "Ô 3500.png", isCard: false },
+            "Ô Mất điểm (75°)": { angle: 75, img: "Ô Mất Điểm.png", isCard: false },
+            "Ô Mất điểm cố định": { angle: -75, img: "Ô Mất Điểm.png", isCard: false }
+        };
+
+        Object.keys(itemsPlacementConfig).forEach(itemName => {
+            const config = itemsPlacementConfig[itemName];
+            const itemWrapper = document.createElement('div');
+            itemWrapper.className = 'placed-item ' + (config.isCard ? 'is-card' : 'is-wedge');
+            itemWrapper.id = 'render-item-' + itemName.replace(/[^a-zA-Z0-9]/g, '_');
+            itemWrapper.style.transform = `rotate(${config.angle}deg)`;
+
+            if (itemName === "Ô Mất điểm cố định") {
+                itemWrapper.classList.add('is-fixed-wedge');
+                itemWrapper.style.display = 'block';
+            }
+
+            const imgEl = document.createElement('img');
+            imgEl.src = './' + config.img;
+            imgEl.alt = itemName;
+            itemWrapper.appendChild(imgEl);
+            itemsRing.appendChild(itemWrapper);
+        });
+
+        function updateWheelElementsVisibility() {
+            const isRegular = activeWheelType === 'normal';
+            wheelGraphic.classList.remove('wheel-type-normal', 'wheel-type-special');
+            wheelGraphic.classList.add('wheel-type-' + activeWheelType);
+
+            const circle = document.querySelector('.wheel-center-circle');
+            if (circle) {
+                circle.style.display = isRegular ? 'block' : 'none';
+            }
+            if (itemsRing) {
+                itemsRing.style.display = isRegular ? 'block' : 'none';
+            }
+            const fixedMatDiem = document.getElementById('render-item-Ô_Mất_điểm_cố_định');
+            if (fixedMatDiem) {
+                fixedMatDiem.style.display = isRegular ? 'block' : 'none';
+            }
+        }
+        updateWheelElementsVisibility();
+
+        const dotsRing = document.getElementById('dotsRing');
+        for (let i = 0; i < 72; i++) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'dot-wrapper';
+            wrapper.style.transform = `rotate(${i * 5 - 7.5}deg)`;
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            wrapper.appendChild(dot);
+            dotsRing.appendChild(wrapper);
+        }
+
+        const MIN_SPIN_ROTATIONS = 5;
+
+        function computeSpinTarget(startRot, duration, randomOffset, minRotations) {
+            const minRot = (minRotations || MIN_SPIN_ROTATIONS) * 360;
+            let finalDuration = parseFloat(duration);
+            if (isNaN(finalDuration) || finalDuration <= 0) finalDuration = 5;
+            const durationRot = finalDuration * 360;
+            const totalExtra = Math.max(minRot, durationRot) + (randomOffset || 0);
+            const start = parseFloat(startRot);
+            return { startRot: start, targetRot: start + totalExtra, finalDuration: finalDuration };
+        }
+
+        let animationFrameId = null;
+
+        function executeSpin(duration, randomOffset, startTime, startRotFromSource, minRotations) {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            isSpinningNow = true;
+
+            if (wheelGraphic) {
+                wheelGraphic.style.transition = 'none';
+            }
+
+            const startRotBase = (startRotFromSource !== undefined && startRotFromSource !== null && !isNaN(startRotFromSource))
+                ? normalizeAngle(parseFloat(startRotFromSource))
+                : normalizeAngle(getVisualRotation());
+
+            const spin = computeSpinTarget(startRotBase, duration, randomOffset, minRotations);
+            const startRot = spin.startRot;
+            const targetRot = spin.targetRot;
+            const finalDuration = spin.finalDuration;
+
+            currentRotation = startRot;
+            wheelGraphic.style.transform = `rotate(${startRot}deg)`;
+
+            if (document.getElementById('specialValuePopup')) {
+                document.getElementById('specialValuePopup').style.display = 'none';
+            }
+
+            const startTimestamp = Date.now();
+            const durationMs = finalDuration * 1000;
+
+            function easeOutQuint(t) {
+                return 1 - Math.pow(1 - t, 5);
+            }
+
+            function updateProgress() {
+                const now = Date.now();
+                const elapsed = now - startTimestamp;
+
+                if (elapsed >= durationMs) {
+                    const finalNorm = normalizeAngle(targetRot);
+                    currentRotation = finalNorm;
+                    wheelGraphic.style.transform = `rotate(${finalNorm}deg)`;
+                    animationFrameId = null;
+                    isSpinningNow = false;
+                } else {
+                    const t = Math.min(Math.max(elapsed / durationMs, 0), 1);
+                    const progress = easeOutQuint(t);
+                    const currentPos = startRot + (targetRot - startRot) * progress;
+
+                    wheelGraphic.style.transform = `rotate(${currentPos}deg)`;
+                    animationFrameId = requestAnimationFrame(updateProgress);
+                }
+            }
+            animationFrameId = requestAnimationFrame(updateProgress);
+        }
+
+        function executeResetRotation() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            isSpinningNow = false;
+            currentRotation = 270;
+            wheelGraphic.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+            wheelGraphic.style.transform = 'rotate(270deg)';
+            specialValuePopup.style.display = 'none';
+        }
+
+        function executePointerLight(pointerName, state) {
+            const pointerObj = document.getElementById('pointer-' + pointerName);
+            if (!pointerObj) return;
+            pointerLightsState[pointerName] = state;
+            if (state === 'on') {
+                if (pointerName === 'red') pointerObj.style.setProperty('--p-color', '#FF0000');
+                if (pointerName === 'yellow') pointerObj.style.setProperty('--p-color', '#FFFF00');
+                if (pointerName === 'blue') pointerObj.style.setProperty('--p-color', '#0000FF');
+            } else {
+                pointerObj.style.setProperty('--p-color', '#FFFFFF');
+            }
+        }
+
+        function getWedgeValueAtYellowPointer() {
+            if (!isSpecialMode || specialWedges.length === 0) return "Chưa xáo giá trị";
+            const rotation = getVisualRotation();
+            let angleAtTop = normalizeAngle(360 - normalizeAngle(rotation));
+            let wedgeIndex = Math.floor(normalizeAngle(angleAtTop + 7.5) / 15) % 24;
+            let result = specialWedges[wedgeIndex];
+            return typeof result === 'number' ? result.toLocaleString('vi-VN') + " đ" : result;
+        }
+
+        function executeShowValue() {
+            if (!isSpecialMode) return;
+            currentRotation = getVisualRotation();
+            specialValuePopup.innerText = getWedgeValueAtYellowPointer();
+            specialValuePopup.style.display = 'block';
+        }
+
+        function executeHideValue() {
+            specialValuePopup.style.display = 'none';
+        }
+
+        function executeFindHighest(startTime, targetRotFromSource, targetIndexFromSource) {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            if (!isSpecialMode || specialWedges.length === 0) return;
+            isSpinningNow = true;
+
+            if (wheelGraphic) {
+                wheelGraphic.style.transition = 'none';
+            }
+
+            let targetIndex;
+            let targetRot;
+
+            const startRot = normalizeAngle(getVisualRotation());
+            wheelGraphic.style.transform = `rotate(${startRot}deg)`;
+
+            if (targetRotFromSource !== undefined && targetRotFromSource !== null && !isNaN(targetRotFromSource)
+                && targetIndexFromSource !== undefined && targetIndexFromSource !== null) {
+                targetIndex = targetIndexFromSource;
+                targetRot = startRot + (normalizeAngle(targetRotFromSource) - startRot + 360) % 360 + 1080;
+            } else {
+                const maxVal = Math.max(...specialWedges);
+                targetIndex = specialWedges.indexOf(maxVal);
+                const targetCenterAngle = targetIndex * 15;
+                let targetAngleDiff = (360 - targetCenterAngle) - startRot;
+                if (targetAngleDiff <= 0) targetAngleDiff += 360;
+                targetRot = startRot + targetAngleDiff + 1080;
+            }
+
+            specialValuePopup.style.display = 'none';
+
+            const startTimestamp = Date.now();
+            const durationMs = 3800;
+
+            function easeOutQuint(t) {
+                return 1 - Math.pow(1 - t, 5);
+            }
+
+            function updateFindHighestProgress() {
+                const now = Date.now();
+                const elapsed = now - startTimestamp;
+
+                if (elapsed >= durationMs) {
+                    const finalNorm = normalizeAngle(targetRot);
+                    currentRotation = finalNorm;
+                    wheelGraphic.style.transform = `rotate(${finalNorm}deg)`;
+
+                    let realValue = specialWedges[targetIndex];
+                    specialValuePopup.innerText = typeof realValue === 'number' ? realValue.toLocaleString('vi-VN') + " đ" : realValue;
+                    specialValuePopup.style.display = 'block';
+
+                    animationFrameId = null;
+                    isSpinningNow = false;
+                } else {
+                    const t = Math.min(Math.max(elapsed / durationMs, 0), 1);
+                    const progress = easeOutQuint(t);
+                    const currentPos = startRot + (targetRot - startRot) * progress;
+
+                    wheelGraphic.style.transform = `rotate(${currentPos}deg)`;
+                    animationFrameId = requestAnimationFrame(updateFindHighestProgress);
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(updateFindHighestProgress);
+        }
+
+        async function loadWheelState() {
+            const { data } = await supabase
+                .from('game_room_state')
+                .select('wheel_state')
+                .eq('room_id', roomId)
+                .single();
+            if (data && data.wheel_state) {
+                applyWheelState(data.wheel_state);
+            }
+        }
+
+        function updateWheelBackgroundSize() {
+            if (activeWheelType === 'special') {
+                wheelGraphic.style.backgroundSize = 'calc(100% + 12px) calc(100% + 12px)';
+            } else {
+                wheelGraphic.style.backgroundSize = 'calc(100% + 7px) calc(100% + 7px)';
+            }
+        }
+
+        function applyWheelState(state) {
+            if (!state) return;
+            currentRotation = (state.currentRotation !== undefined && state.currentRotation !== null) ? state.currentRotation : 270;
+            isSpecialMode = state.isSpecialMode || false;
+            specialWedges = state.specialWedges || [];
+
+            wheelGraphic.style.transition = 'none';
+            wheelGraphic.style.transform = 'rotate(' + currentRotation + 'deg)';
+            wheelGraphic.style.display = state.wheelDisplay || 'block';
+            wheelGraphic.style.backgroundImage = state.wheelBg || "url('./Nón.png')";
+            activeWheelType = inferWheelTypeFromBg(state.wheelBg || wheelGraphic.style.backgroundImage);
+            updateWheelBackgroundSize();
+
+            wheelArea.classList.remove('zoomed', 'tilt-red', 'tilt-blue');
+            if (state.zoomed) {
+                wheelArea.classList.add('zoomed');
+                if (state.subWheelTilt === 'red') {
+                    wheelArea.classList.add('tilt-red');
+                } else if (state.subWheelTilt === 'blue') {
+                    wheelArea.classList.add('tilt-blue');
+                }
+            }
+
+            specialValuePopup.style.display = state.popupDisplay || 'none';
+            specialValuePopup.innerText = state.popupText || '0 điểm';
+
+            if (state.itemsState) {
+                Object.keys(state.itemsState).forEach(itemName => {
+                    if (itemName === "Ô Mất điểm cố định") return;
+                    const targetId = 'render-item-' + itemName.replace(/[^a-zA-Z0-9]/g, '_');
+                    const el = document.getElementById(targetId);
+                    if (el) el.style.display = state.itemsState[itemName];
+                });
+            }
+
+            updateWheelElementsVisibility();
+
+            if (state.pointerLights) {
+                pointerLightsState = Object.assign({}, state.pointerLights);
+                ['red', 'yellow', 'blue'].forEach(pName => {
+                    executePointerLight(pName, pointerLightsState[pName]);
+                });
+            }
+        }
+
+        loadWheelState();
+
+        try {
+            const channel = supabase.channel('wheel_room_' + roomId);
+            channel.on('broadcast', { event: 'toggle_wheel' }, function (payload) {
+                if (!payload.payload.isShow) {
+                    wheelGraphic.style.display = 'none';
+                    return;
+                }
+                wheelGraphic.style.display = 'block';
+                if (payload.payload.type === 'special') {
+                    wheelGraphic.style.backgroundImage = "url('./Nón Đặc Biệt.png')";
+                    isSpecialMode = true;
+                    activeWheelType = 'special';
+                } else {
+                    wheelGraphic.style.backgroundImage = "url('./Nón.png')";
+                    isSpecialMode = false;
+                    activeWheelType = 'normal';
+                    specialValuePopup.style.display = 'none';
+                }
+                updateWheelBackgroundSize();
+                updateWheelElementsVisibility();
+            }).on('broadcast', { event: 'spin_wheel' }, function (payload) {
+                executeSpin(payload.payload.duration, payload.payload.randomOffset, payload.payload.startTime, payload.payload.startRot, payload.payload.minRotations);
+            }).on('broadcast', { event: 'pointer_light' }, function (payload) {
+                executePointerLight(payload.payload.pointerName, payload.payload.state);
+            }).on('broadcast', { event: 'zoom_pointer' }, function (payload) {
+                if (payload.payload.type === 'in') {
+                    wheelArea.classList.add('zoomed');
+                    wheelArea.classList.remove('tilt-red', 'tilt-blue');
+                } else if (payload.payload.type === 'out') {
+                    wheelArea.classList.remove('zoomed', 'tilt-red', 'tilt-blue');
+                }
+            }).on('broadcast', { event: 'tilt_sub_wheel' }, function (payload) {
+                wheelArea.classList.add('zoomed');
+                wheelArea.classList.remove('tilt-red', 'tilt-blue');
+
+                if (payload.payload.direction === 'red') {
+                    wheelArea.classList.add('tilt-red');
+                } else if (payload.payload.direction === 'blue') {
+                    wheelArea.classList.add('tilt-blue');
+                }
+            }).on('broadcast', { event: 'toggle_item' }, function (payload) {
+                const itemName = payload.payload.itemName;
+                if (itemName === "Ô Mất điểm cố định") return;
+                const targetId = 'render-item-' + itemName.replace(/[^a-zA-Z0-9]/g, '_');
+                const itemElement = document.getElementById(targetId);
+                if (itemElement) itemElement.style.display = payload.payload.isShow ? 'block' : 'none';
+            }).on('broadcast', { event: 'shuffle_special' }, function (payload) {
+                specialWedges = payload.payload.wedges;
+                specialValuePopup.style.display = 'none';
+            }).on('broadcast', { event: 'show_value' }, function () {
+                executeShowValue();
+            }).on('broadcast', { event: 'hide_value' }, function () {
+                executeHideValue();
+            }).on('broadcast', { event: 'find_highest' }, function (payload) {
+                executeFindHighest(payload.payload.startTime, payload.payload.targetRot, payload.payload.targetIndex);
+            }).on('broadcast', { event: 'reset_rotation' }, function () {
+                executeResetRotation();
+            }).on('broadcast', { event: 'play_sound' }, function (payload) {
+                if (payload && payload.payload && payload.payload.sound) {
+                    playSoundEffect(payload.payload.sound);
+                }
+            }).subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    channel.send({ event: 'request_sync', type: 'broadcast', payload: {} });
+                    loadWheelState();
+                }
+            });
+
+            channel.on('broadcast', { event: 'request_sync' }, async function () {
+                if (isSpinningNow) return;
+                channel.send({
+                    event: 'spin_wheel_sync',
+                    type: 'broadcast',
+                    payload: { rotation: currentRotation, isSpecialMode: isSpecialMode, wedges: specialWedges }
+                });
+            }).on('broadcast', { event: 'spin_wheel_sync' }, function (payload) {
+                if (isSpinningNow) return;
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                currentRotation = payload.payload.rotation;
+                isSpecialMode = payload.payload.isSpecialMode;
+                specialWedges = payload.payload.wedges;
+                wheelGraphic.style.transition = 'none';
+                wheelGraphic.style.transform = `rotate(${currentRotation}deg)`;
+            });
+
+        } catch (e) { }
+
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.keyCode === 123) e.preventDefault();
+            if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+
+</html>
