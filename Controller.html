@@ -303,7 +303,7 @@
             <div class="section">
                 <h2>Tạo mã phòng & mật khẩu</h2>
                 <div class="flex-row">
-                    <button id="btnCreateRoom" onclick="createRoom()" style="background: green; color: #ffffff; width: 100%; padding: 6px;">Tạo phòng mới</button>
+                    <button id="btnCreateRoom" onclick="createRoom()" style="background: #008000; color: #ffffff; width: 100%; padding: 6px;">Tạo phòng mới</button>
                 </div>
                 <div id="roomCreateResult"
                     style="margin-top: 5px; display: none; padding: 5px; background: #f9f9f9; border-radius: 4px; border: 1px solid #ddd; font-size: 11px;">
@@ -321,7 +321,7 @@
                         <button class="btn-off" onclick="toggleWheel('normal', false)" style="flex: 1;">Ẩn Nón</button>
                     </div>
                     <div class="flex-row" style="gap: 2px;">
-                        <button onclick="toggleWheel('special', true)" style="flex: 1; background: #2563eb;">Hiện Nón ĐB</button>
+                        <button onclick="toggleWheel('special', true)" style="flex: 1; background: #0000ff;">Hiện Nón ĐB</button>
                         <button class="btn-off" onclick="toggleWheel('special', false)" style="flex: 1;">Ẩn Nón ĐB</button>
                     </div>
                 </div>
@@ -633,11 +633,11 @@
                 'P2 (Vàng): <strong>' + info.p2_pass + '</strong> | ' +
                 'P3 (Xanh): <strong>' + info.p3_pass + '</strong><br>' +
                 '<div style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px;">' +
-                '<a href="Wheel.html?roomid=' + rid + '" target="_blank" style="background:#16a34a; color:#fff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">🎡 Wheel</a>' +
-                '<a href="Sub_Wheel.html?roomid=' + rid + '" target="_blank" style="background:#9333ea; color:#fff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">🔄 Sub_Wheel</a>' +
-                '<a href="Player1.html?roomid=' + rid + '&auth=' + info.p1_pass + '" target="_blank" style="background:red; color:#fff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">👤 P1 (Đỏ)</a>' +
-                '<a href="Player2.html?roomid=' + rid + '&auth=' + info.p2_pass + '" target="_blank" style="background:#eab308; color:#000; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">👤 P2 (Vàng)</a>' +
-                '<a href="Player3.html?roomid=' + rid + '&auth=' + info.p3_pass + '" target="_blank" style="background:#0000ff; color:#fff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">👤 P3 (Xanh)</a>' +
+                '<a href="Wheel.html?roomid=' + rid + '" target="_blank" style="background:#008000; color:#ffffff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">🎡 Wheel</a>' +
+                '<a href="Sub_Wheel.html?roomid=' + rid + '" target="_blank" style="background:#800080; color:#ffffff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">🔄 Sub_Wheel</a>' +
+                '<a href="Player1.html?roomid=' + rid + '&auth=' + info.p1_pass + '" target="_blank" style="background:#ff0000; color:#ffffff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">👤 P1 (Đỏ)</a>' +
+                '<a href="Player2.html?roomid=' + rid + '&auth=' + info.p2_pass + '" target="_blank" style="background:#ffff00; color:#000000; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">👤 P2 (Vàng)</a>' +
+                '<a href="Player3.html?roomid=' + rid + '&auth=' + info.p3_pass + '" target="_blank" style="background:#0000ff; color:#ffffff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">👤 P3 (Xanh)</a>' +
                 '</div>';
         }
 
@@ -975,12 +975,15 @@
                 const btnHide = card.querySelector('.btn-hide');
                 if (btnShow && btnHide) {
                     if (isShow) {
-                        btnShow.style.background = '#16a34a';
+                        btnShow.style.background = '#008000';
+                        btnShow.style.color = '#ffffff';
                         btnHide.style.background = '#ff00ff';
+                        btnHide.style.color = '#000000';
                     } else {
                         btnShow.style.background = '#800080';
-                        btnHide.style.background = '#e11d48';
-                        btnHide.style.color = '#fff';
+                        btnShow.style.color = '#ffffff';
+                        btnHide.style.background = '#ff0000';
+                        btnHide.style.color = '#ffffff';
                     }
                 }
             }
@@ -1126,8 +1129,8 @@
             div.innerHTML = `
                 <div style="margin-bottom: 4px; font-weight: bold;">${item.name}</div>
                 <div class="flex-row" style="justify-content: center; gap: 3px;">
-                    <button class="btn-show" style="padding: 3px 8px; font-size: 11px; flex: 1;" onclick="toggleItem('${item.name}', true)">Hiện</button>
-                    <button class="btn-hide btn-off" style="padding: 3px 8px; font-size: 11px; flex: 1;" onclick="toggleItem('${item.name}', false)">Ẩn</button>
+                    <button class="btn-show" style="padding: 3px 8px; font-size: 11px; flex: 1; background: #800080; color: #ffffff;" onclick="toggleItem('${item.name}', true)">Hiện</button>
+                    <button class="btn-hide btn-off" style="padding: 3px 8px; font-size: 11px; flex: 1; background: #ff0000; color: #ffffff;" onclick="toggleItem('${item.name}', false)">Ẩn</button>
                 </div>
             `;
             container.appendChild(div);
